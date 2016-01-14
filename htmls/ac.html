@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>SEIL Data Visualizer</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/simple-sidebar.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <script src="./js/highcharts.js"></script>
+    <script src="./js/modules/exporting.js"></script>
+
+    <!-- Menu Toggle Script -->
+
+
+    <style type="text/css">
+            ${demo.css}
+    </style>
+        <script type="text/javascript">
+            $(document).ready(function ()
+            {
+
+
+                var checked_cb = [];
+                var unchecked_cb = []
+
+
+                function get_ac_data(parameters, collection_name)
+                {
+                    console.log('get ac data')
+                    console.log(parameters);
+                    $.ajax({
+                        type:"GET",
+                        dataType:"JSONP",
+                        url:"http://127.0.0.1:7001/recent_electrical_information",
+                        data:{'parameters':parameters, 'collection':collection_name},
+                        success:function(data){
+                                console.log("Updated DB");
+                                console.log(data);
+                            }
+                    
+                    });
+                } 
+
+                function get_last_N_ac_data(T, parameters, collection_name)
+                {
+                    console.log('get ac data')
+                    console.log(parameters);
+                    $.ajax({
+                        type:"GET",
+                        dataType:"JSONP",
+                        url:"http://127.0.0.1:7001/last_N_electrical_information",
+                        data:{'parameters':parameters, 'collection':collection_name, 'period':T},
+                        success:function(data){
+                                console.log("Updated DB");
+                                var array = JSON.parse("["+data+"]")
+                                console.log(array.length)
+                                for (var i = 0; i < array.length; i++) 
+                                {
+                                    console.log(array[i].length)
+                                    for (var j = 0; j < array[i].length; j++) 
+                                    {
+                                        for (var k = 0; k < parameters.length; k++) {
+                                            console.log(array[i][j][parameters[k]])
+                                        };
+                                    };
+                                };
+                            }
+                    
+                    });
+                } 
+
+                
+                
+
+                $('.params').change(function()
+                {
+                    parameter_ch = $(this).val() ;
+                    if(this.checked)
+                    {
+                        
+                        console.log(parameter_ch) ;
+
+                        param_index = unchecked_cb.indexOf(parameter_ch) ;
+                        if(param_index != -1)
+                        {
+                            unchecked_cb.splice(param_index,1);
+                        }
+
+                        checked_cb.push(parameter_ch) ;
+                        console.log(checked_cb);
+                        if (checked_cb.length > 0)
+                            //{get_ac_data(checked_cb, 'meter1');}
+                            {get_last_N_ac_data(1, checked_cb, 'meter1');}    
+
+                    }
+
+                    else
+                    {
+                        console.log(parameter_ch) ;
+
+                        param_index = checked_cb.indexOf(parameter_ch) ;
+                        if(param_index != -1)
+                        {
+                            checked_cb.splice(param_index,1);
+                        }
+
+                        unchecked_cb.push(parameter_ch) ;
+                        console.log(checked_cb);
+                         if (checked_cb.length > 0)
+                            //{get_ac_data(checked_cb, 'meter1');}
+                            {get_last_N_ac_data(1, checked_cb, 'meter1');}   
+                        
+                    }
+
+                    console.log(checked_cb);
+                    
+                });
+
+                setInterval(function(){get_ac_data(checked_cb,'meter1')},1000) ;
+
+            });
+
+
+            
+
+        </script>
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                <li class="sidebar-brand">
+                    <a href="#">
+                        SEIL Data Visualizer
+                    </a>
+                </li>
+                <li>
+                    <a href="#">Air Conditioners</a>
+                </li>
+                <li>
+                    <a href="#">Lights</a>
+                </li>
+                <li>
+                    <a href="#">Plugs</a>
+                </li>
+                <li>
+                    <a href="#">Aggregate</a>
+                </li>
+                
+            </ul>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+
+
+                <div class="row">
+
+                    <div class="col-lg-12">
+                        <div id="plot" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <table class="table">
+                            <thead>
+                              <tr>
+                                <th>&Phi; I</th>
+                                <th>&Phi; II</th>
+                                <th>&Phi; III</th>
+                                <th>Aggregate </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td><input type="checkbox" class="params" value="W1"> W1 </td>
+                                 <td><input type="checkbox" class="params" value="W2"> W2 </td>
+                                 <td><input type="checkbox" class="params" value="W3"> W3 </td>
+                                 <td><input type="checkbox" class="params" value="W"> W </td>
+                              </tr>
+                               <tr>
+                                <td><input type="checkbox" class="params" value="A1"> A1 </td>
+                                 <td><input type="checkbox" class="params" value="A2"> A2 </td>
+                                 <td><input type="checkbox" class="params" value="A3"> A3 </td>
+                                 <td><input type="checkbox" class="params" value="A"> A </td>
+                              </tr>
+                              <tr>
+                                <td><input type="checkbox" class="params" value="PF1"> PF1 </td>
+                                 <td><input type="checkbox" class="params" value="PF2"> PF2 </td>
+                                 <td><input type="checkbox" class="params" value="PF3"> PF3 </td>
+                                 <td><input type="checkbox" class="params" value="PF"> PF </td>
+                              </tr>
+                              <tr>
+                                <td><input type="checkbox" class="params" value="VA1"> VA1 </td>
+                                 <td><input type="checkbox" class="params" value="VA2"> VA2 </td>
+                                 <td><input type="checkbox" class="params" value="VA3"> VA3 </td>
+                                 <td><input type="checkbox" class="params" value="VA"> VA </td>
+                              </tr>
+                              <tr>
+                                <td><input type="checkbox" class="params" value="VAR1"> VAR1 </td>
+                                 <td><input type="checkbox" class="params" value="VAR2"> VAR2 </td>
+                                 <td><input type="checkbox" class="params" value="VAR3"> VAR3 </td>
+                                 <td><input type="checkbox" class="params" value="VAR"> VAR </td>
+                              </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+
+
+
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    
+
+
+
+    <!-- jQuery -->
+
+    
+
+</body>
+
+</html>
