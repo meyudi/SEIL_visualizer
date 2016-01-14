@@ -2,6 +2,12 @@ from flask import Flask, request, Response, jsonify
 #from flaskext.mysql import MySQL
 from datetime import datetime
 
+
+import json
+
+from utilities import *
+from databases import *
+
 #mysql = MySQL()
 app = Flask(__name__)
 
@@ -89,6 +95,70 @@ def get_current_temperature():
 
 
 
+
+
+
+
+@app.route('/recent_electrical_information', methods = ['POST', 'GET'])
+def get_recent_electrical_information():
+	if request.method == 'GET':
+
+		parameters =  request.args.getlist('parameters[]')
+		collection_name = request.args.get('collection')
+
+
+		for p in parameters:
+			print p
+
+		
+		data_tuple = get_data_tuple(parameters,collection_name,db)
+		s = str(data_tuple)
+		print s,'dd'
+
+		cb = request.args.get('callback')
+
+		#update this string with appropriate format
+		resp = '%s("%s")' %(cb, s)
+
+		return Response(resp, mimetype='application/javascript')
+	elif request.method == 'POST':
+		return 'post request not supported'
+
+
+@app.route('/last_N_electrical_information', methods = ['POST', 'GET'])
+def get_last_N_electrical_information():
+	if request.method == 'GET':
+
+		parameters =  request.args.getlist('parameters[]')
+		collection_name = request.args.get('collection')
+		period = int(request.args.get('period'))
+
+
+		for p in parameters:
+			print p
+
+		print collection_name, period		
+		data_tuple = get_N_data_tuples(period, parameters,collection_name,db)
+		print len(data_tuple)
+		s = json.dumps(data_tuple)
+
+		print s
+		
+
+		cb = request.args.get('callback')
+
+		#update this string with appropriate format
+		resp = "%s('%s')" %(cb, s)
+
+		return Response(resp, mimetype='application/javascript')
+	elif request.method == 'POST':
+		return 'post request not supported'
+
+
+
+
+
+
 @app.route('/')
 def index():
 	info_str = "v1.0<br>" + "These are only GET APIs"
@@ -99,4 +169,9 @@ def index():
 
 
 if __name__ == '__main__':
+	
+	con= pm_connection()
+	db = db_connection(con)
+
+
 	app.run('0.0.0.0',port=7001, debug=True)
